@@ -1,0 +1,69 @@
+name: dxc/build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  ARTIFACTS_DIR_NAME: dxc-artifacts
+  ARTIFACTS_ZIP_NAME: dxc-artifacts.zip
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update --fix-missing
+        sudo apt-get install ninja-build
+
+    - name: Generate
+      run: cmake . -Bbuild-linux -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ $(cat utils/cmake-predefined-config-params)
+
+    - name: Compile
+      run: ninja -C build-linux -j 4
+
+    - name: Create Package
+      run: |
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/lib
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/bin
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/include
+
+        cp build-linux/lib/libdxcompiler.so* ${{ env.ARTIFACTS_DIR_NAME }}/lib/
+        cp build-linux/bin/dxc ${{ env.ARTIFACTS_DIR_NAME }}/bin/
+        cp -r include/dxc ${{ env.ARTIFACTS_DIR_NAME }}/include
+
+        7z a -mx9 -tzip ${{ env.ARTIFACTS_ZIP_NAME }} ./${{ env.ARTIFACTS_DIR_NAME }}/*
+
+    - name: Get current date
+      id: get_date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ env.ARTIFACTS_ZIP_NAME }}
+        asset_name: dxc-linux-${{ steps.get_date.outputs.date }}.zip
+        asset_content_type: application/zip
