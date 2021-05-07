@@ -1,4 +1,4 @@
-name: dxc/build
+name: dxc/create_package
 
 on:
   push:
@@ -12,26 +12,26 @@ env:
 
 jobs:
   create_release:
-    name: Create release
+    name: create release
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       date_suffix: ${{ steps.get_date.outputs.date }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          prerelease: false
+    - name: Get current date
+      id: get_date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
 
-      - name: Get current date
-        id: get_date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: DXCompiler artifacts ${{ steps.get_date.outputs.date }}
+        draft: true
+        prerelease: false
 
   linux:
     runs-on: ubuntu-latest
