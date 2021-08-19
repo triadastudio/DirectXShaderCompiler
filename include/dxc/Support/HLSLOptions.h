@@ -20,6 +20,7 @@
 #include "dxc/dxcapi.h"
 #include "dxc/Support/SPIRVOptions.h"
 #include <map>
+#include <set>
 
 namespace llvm {
 namespace opt {
@@ -133,6 +134,7 @@ public:
   unsigned DefaultTextCodePage = DXC_CP_UTF8; // OPT_encoding
 
   bool AllResourcesBound = false; // OPT_all_resources_bound
+  bool IgnoreOptSemDefs = false; // OPT_ignore_opt_semdefs
   bool AstDump = false; // OPT_ast_dump
   bool ColorCodeAssembly = false; // OPT_Cc
   bool CodeGenHighLevel = false; // OPT_fcgl
@@ -196,10 +198,17 @@ public:
   bool ForceZeroStoreLifetimes = false; // OPT_force_zero_store_lifetimes
   bool EnableLifetimeMarkers = false; // OPT_enable_lifetime_markers
   bool EnableTemplates = false; // OPT_enable_templates
+  bool StrictUDTCasting = false; // OPT_strict_udt_casting
+
+  // Experimental option to enable short-circuiting operators
+  bool EnableShortCircuit = false; // OPT_enable_short_circuit
 
   // Optimization pass enables, disables and selects
   std::map<std::string, bool> DxcOptimizationToggles; // OPT_opt_enable & OPT_opt_disable
   std::map<std::string, std::string> DxcOptimizationSelects; // OPT_opt_select
+
+  std::set<std::string> IgnoreSemDefs; // OPT_ignore_semdef
+  std::map<std::string, std::string> OverrideSemDefs; // OPT_override_semdef
 
   bool PrintAfterAll; // OPT_print_after_all
   bool EnablePayloadQualifiers = false; // OPT_enable_payload_qualifiers

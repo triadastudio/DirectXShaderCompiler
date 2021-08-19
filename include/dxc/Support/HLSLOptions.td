@@ -271,6 +271,12 @@ def validator_version : Separate<["-", "/"], "validator-version">, Group<hlslcom
   HelpText<"Override validator version for module.  Format: <major.minor> ; Default: DXIL.dll version or current internal version.">;
 def print_after_all : Flag<["-", "/"], "print-after-all">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
   HelpText<"Print LLVM IR after each pass.">;
+def ignore_opt_semdefs : Flag<["-", "/"], "ignore-opt-semdefs">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
+  HelpText<"Ignore optional semantic defines which are not required to ensure program correctness.">;
+def ignore_semdef : Separate<["-", "/"], "ignore-semdef">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
+  HelpText<"Ignore the semantic define passed as a value to this flag.">;
+def override_semdef : Separate<["-", "/"], "override-semdef">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
+  HelpText<"Override the value of semantic define with the one passed with this flag.">;
 def force_zero_store_lifetimes : Flag<["-", "/"], "force-zero-store-lifetimes">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
   HelpText<"Instead of generating lifetime intrinsics (SM >= 6.6) or storing undef (SM < 6.6), force fall back to storing zeroinitializer.">;
 def enable_lifetime_markers : Flag<["-", "/"], "enable-lifetime-markers">, Group<hlslcomp_Group>, Flags<[CoreOption]>,
@@ -279,6 +285,8 @@ def disable_lifetime_markers : Flag<["-", "/"], "disable-lifetime-markers">, Gro
   HelpText<"Disable generation of lifetime markers where they would be otherwise (6.6+)">;
 def enable_templates: Flag<["-", "/"], "enable-templates">, Group<hlslcomp_Group>, Flags<[CoreOption]>,
   HelpText<"Enable template support for HLSL.">;
+def strict_udt_casting: Flag<["-", "/"], "strict-udt-casting">, Group<hlslcomp_Group>, Flags<[CoreOption, HelpHidden]>,
+  HelpText<"Require explicit casts between different structure types with compatible layouts.">;
 def enable_payload_qualifiers : Flag<["-", "/"], "enable-payload-qualifiers">, Group<hlslcomp_Group>, Flags<[CoreOption, RewriteOption, DriverOption]>,
   HelpText<"Enables support for payload access qualifiers for raytracing payloads in SM 6.6.">;
 def disable_payload_qualifiers : Flag<["-", "/"], "disable-payload-qualifiers">, Group<hlslcomp_Group>, Flags<[CoreOption, RewriteOption, DriverOption]>,
@@ -440,6 +448,9 @@ def Qkeep_reflect_in_dxil : Flag<["-", "/"], "Qkeep_reflect_in_dxil">,
 def Qstrip_reflect_from_dxil : Flag<["-", "/"], "Qstrip_reflect_from_dxil">,
   Flags<[CoreOption, HelpHidden]>, Group<hlslutil_Group>,
   HelpText<"Strip reflection data from shader bytecode  (must be used with /Fo <file>)">;
+
+def enable_short_circuit : Flag<["-", "/"], "enable-short-circuit">, Flags<[CoreOption, HelpHidden]>, Group<hlslcomp_Group>,
+  HelpText<"Operators '&&', '||', and '?:' will short circuit, only accepting scalar inputs.  Use and(), or(), and select() intrinsics in place of non-short-circuiting vector operators.">;
 
 /*
 def shtemplate : JoinedOrSeparate<["-", "/"], "shtemplate">, MetaVarName<"<file>">, Group<hlslcomp_Group>,

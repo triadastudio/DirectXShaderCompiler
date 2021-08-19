@@ -258,6 +258,18 @@ static void addDiagnosticArgs(ArgList &Args, OptSpecifier Group,
   }
 }
 
+static std::pair<std::string, std::string> ParseDefine(std::string &argVal) {
+  std::pair<std::string, std::string> result = std::make_pair("", "");
+  if (argVal.empty())
+    return result;
+  auto defEndPos = argVal.find('=') == std::string::npos ? argVal.size() : argVal.find('=');
+  result.first = argVal.substr(0, defEndPos);
+  if (!result.first.empty() && defEndPos < argVal.size() - 1) {
+    result.second = argVal.substr(defEndPos + 1, argVal.size() - defEndPos - 1);
+  }
+  return result;
+}
+
 // SPIRV Change Starts
 #ifdef ENABLE_SPIRV_CODEGEN
 /// Checks and collects the arguments for -fvk-{b|s|t|u}-shift into *shifts.
@@ -465,6 +477,7 @@ int ReadDxcOpts(const OptTable *optionTable, unsigned flagsToInclude,
   opts.ExtractPrivateFile = Args.getLastArgValue(OPT_getprivate);
   opts.Enable16BitTypes = Args.hasFlag(OPT_enable_16bit_types, OPT_INVALID, false);
   opts.EnableTemplates = Args.hasFlag(OPT_enable_templates, OPT_INVALID, false);
+  opts.StrictUDTCasting = Args.hasFlag(OPT_strict_udt_casting, OPT_INVALID, false);
   opts.OutputObject = Args.getLastArgValue(OPT_Fo);
   opts.OutputHeader = Args.getLastArgValue(OPT_Fh);
   opts.OutputWarningsFile = Args.getLastArgValue(OPT_Fe);
@@ -505,6 +518,23 @@ int ReadDxcOpts(const OptTable *optionTable, unsigned flagsToInclude,
       errors << "Contradictory use of -opt-disable and -opt-enable with \""
              << llvm::StringRef(opt).lower() << "\"";
       return 1;
+    }
+  }
+
+  std::vector<std::string> ignoreSemDefs = Args.getAllArgValues(OPT_ignore_semdef);
+  for (std::string &ignoreSemDef : ignoreSemDefs) {
+    opts.IgnoreSemDefs.insert(ignoreSemDef);
+  }
+
+  std::vector<std::string> overrideSemDefs = Args.getAllArgValues(OPT_override_semdef);
+  for (std::string &overrideSemDef : overrideSemDefs) {
+    auto kv = ParseDefine(overrideSemDef);
+    if (kv.first.empty())
+      continue;
+    if (opts.OverrideSemDefs.find(kv.first) == opts.OverrideSemDefs.end()) {
+      opts.OverrideSemDefs.insert(std::make_pair(kv.first, kv.second));
+    } else {
+      opts.OverrideSemDefs[kv.first] = kv.second;
     }
   }
 
@@ -613,6 +643,7 @@ int ReadDxcOpts(const OptTable *optionTable, unsigned flagsToInclude,
 
   opts.AllResourcesBound = Args.hasFlag(OPT_all_resources_bound, OPT_INVALID, false);
   opts.AllResourcesBound = Args.hasFlag(OPT_all_resources_bound_, OPT_INVALID, opts.AllResourcesBound);
+  opts.IgnoreOptSemDefs = Args.hasFlag(OPT_ignore_opt_semdefs, OPT_INVALID, false);
   opts.ColorCodeAssembly = Args.hasFlag(OPT_Cc, OPT_INVALID, false);
   opts.DefaultRowMajor = Args.hasFlag(OPT_Zpr, OPT_INVALID, false);
   opts.DefaultColMajor = Args.hasFlag(OPT_Zpc, OPT_INVALID, false);
@@ -657,6 +688,10 @@ int ReadDxcOpts(const OptTable *optionTable, unsigned flagsToInclude,
                               !Args.hasFlag(OPT_disable_lifetime_markers, OPT_INVALID, false);
   opts.EnablePayloadQualifiers = Args.hasFlag(OPT_enable_payload_qualifiers, OPT_INVALID,
                                             DXIL::CompareVersions(Major, Minor, 6, 7) >= 0); 
+
+  // Experimental option to enable short-circuiting operators
+  opts.EnableShortCircuit = Args.hasFlag(OPT_enable_short_circuit, OPT_INVALID, false);
+
   if (DXIL::CompareVersions(Major, Minor, 6, 8) < 0) {
      opts.EnablePayloadQualifiers &= !Args.hasFlag(OPT_disable_payload_qualifiers, OPT_INVALID, false);
   }

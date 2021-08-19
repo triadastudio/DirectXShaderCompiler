@@ -42,6 +42,7 @@ public:
   TEST_METHOD(RunConstAssign)
   TEST_METHOD(RunConstDefault)
   TEST_METHOD(RunConversionsBetweenTypeShapes)
+  TEST_METHOD(RunConversionsBetweenTypeShapesStrictUDT)
   TEST_METHOD(RunConversionsNonNumericAggregates)
   TEST_METHOD(RunCppErrors)
   TEST_METHOD(RunCppErrorsHV2015)
@@ -87,6 +88,7 @@ public:
   TEST_METHOD(RunBadInclude)
   TEST_METHOD(RunWave)
   TEST_METHOD(RunBinopDims)
+  TEST_METHOD(RunBitfields)
 
   void CheckVerifies(const wchar_t* path) {
     WEX::TestExecution::SetVerifyOutput verifySettings(WEX::TestExecution::VerifyOutputSettings::LogOnlyFailures);
@@ -172,6 +174,10 @@ TEST_F(VerifierTest, RunConstDefault) {
 
 TEST_F(VerifierTest, RunConversionsBetweenTypeShapes) {
   CheckVerifiesHLSL(L"conversions-between-type-shapes.hlsl");
+}
+
+TEST_F(VerifierTest, RunConversionsBetweenTypeShapesStrictUDT) {
+  CheckVerifiesHLSL(L"conversions-between-type-shapes-strictudt.hlsl");
 }
 
 TEST_F(VerifierTest, RunConversionsNonNumericAggregates) {
@@ -352,4 +358,8 @@ TEST_F(VerifierTest, RunWave) {
 
 TEST_F(VerifierTest, RunBinopDims) {
   CheckVerifiesHLSL(L"binop-dims.hlsl");
+}
+
+TEST_F(VerifierTest, RunBitfields) {
+  CheckVerifiesHLSL(L"bitfields.hlsl");
 }
