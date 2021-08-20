@@ -33,6 +33,47 @@ jobs:
         draft: true
         prerelease: false
 
+  windows:
+    runs-on: windows-latest
+    needs: create_release
+    env: 
+      WIN_SDK_VER: 10.0.19041.0
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Generate & Compile
+      run: |
+        call utils\hct\hctstart.cmd . build
+        call utils\hct\hctbuild.cmd -x64 -Release -dxc-cmake-system-version ${{ env.WIN_SDK_VER }} -show-cmake-log -spirv
+      shell: cmd
+
+    - name: Create Package
+      run: |
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/lib
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/bin
+        mkdir ${{ env.ARTIFACTS_DIR_NAME }}/include
+
+        cp build/Release/lib/dxcompiler.lib ${{ env.ARTIFACTS_DIR_NAME }}/lib/
+        cp build/Release/bin/dxcompiler.dll ${{ env.ARTIFACTS_DIR_NAME }}/bin/
+        cp build/Release/bin/dxc.exe ${{ env.ARTIFACTS_DIR_NAME }}/bin/
+        cp -r include/dxc ${{ env.ARTIFACTS_DIR_NAME }}/include
+
+        7z a -mx9 -tzip ${{ env.ARTIFACTS_ZIP_NAME }} ./${{ env.ARTIFACTS_DIR_NAME }}/*
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create_release.outputs.upload_url }}
+        asset_path: ./${{ env.ARTIFACTS_ZIP_NAME }}
+        asset_name: dxc-windows-${{ needs.create_release.outputs.date_suffix }}.zip
+        asset_content_type: application/zip
+
   linux:
     runs-on: ubuntu-latest
     needs: create_release
